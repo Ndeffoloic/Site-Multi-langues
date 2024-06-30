@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card">
+                <div class="card-header">
+                    {% trans 'Chatbot' %}
+                </div>
+                <ul class="list-group list-group-flush" id="chat-list">
+                    <!-- Les messages du chat seront ajoutés ici -->
+                </ul>
+                <div class="card-body">
+                    <div class="input-group">
+                        <input type="text" id="chat-input" class="form-control" placeholder="{% trans 'Tapez votre message...' %}">
+                        <button class="btn btn-primary" type="button" id="send-btn">{% trans 'Envoyer' %}</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script src="{% static 'js/chat.js' %}"></script>
+{% endblock %}
+
+
+{% endblock %}

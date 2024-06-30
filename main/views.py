@@ -22,3 +22,7 @@ def createBlogPost(request):
         new_post.save()  # Enregistrement de l'instance dans la base de données
         return redirect('blog_list')  # Redirection vers la liste des blogs après la création
     return render(request, 'blog/createBlogPost.html')
+
+def chatbot(request):
+    # Ici, vous pouvez ajouter la logique pour intégrer votre modèle de LLM ou RAG pour la conversation
+    return render(request, 'chatbot.html')

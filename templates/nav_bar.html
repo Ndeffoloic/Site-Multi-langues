@@ -1,7 +1,9 @@
 {% load i18n %}
 <nav class="navbar navbar-expand-lg navbar-light bg-light">
     <div class="container-fluid">
-        <a class="navbar-brand" href="#">Logo</a>
+        <a class="navbar-brand" href="#">
+            <img src="/media/logo/Diot-4.png" alt="Logo" style="height: 40px;"> <!-- Assurez-vous que le chemin d'accès est correct -->
+        </a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
@@ -14,7 +16,7 @@
                     <a class="nav-link" href="{% url 'create_blog_post' %}">{% trans 'Créer un blog' %}</a> 
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="#">{% trans 'Services' %}</a>
+                    <a class="nav-link" href="{% url 'chatbot' %}">{% trans 'Discuter avec un chatbot' %}</a>                
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="#">{% trans 'Contact' %}</a>
