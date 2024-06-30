@@ -1,5 +1,6 @@
 import json
 
+import requests  # Assurez-vous d'importer requests
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -27,17 +28,38 @@ def createBlogPost(request):
         return redirect('blog_list')  # Redirection vers la liste des blogs après la création
     return render(request, 'blog/createBlogPost.html')
 
+#https://poe.com/BotPoeGratuitEssai1
+
+
+
 @csrf_exempt
 def chatbot_api(request):
     if request.method == "GET":
-        # Rendre l'interface utilisateur du chatbot pour les requêtes GET
         return render(request, 'chatbot.html')
     elif request.method == "POST":
         data = json.loads(request.body)
         message = data.get("message")
-        # Logique existante pour traiter le message
-        response_message = "Echo: " + message
-        return JsonResponse({"response": response_message})
+        
+        # URL de l'API du bot de POE
+        poe_bot_url = "https://poe.com/BotPoeGratuitEssai1"
+        
+        # Préparation de la requête à l'API du bot
+        payload = json.dumps({"message": message})
+        headers = {'Content-Type': 'application/json'}
+        
+        try:
+            # Envoi de la requête à l'API du bot de POE
+            response = requests.post(poe_bot_url, data=payload, headers=headers)
+            
+            # Vérification que la requête a réussi
+            if response.status_code == 200:
+                # Extraction de la réponse du bot
+                bot_response = response.json()
+                return JsonResponse({"response": bot_response})
+            else:
+                return JsonResponse({"error": "Erreur lors de la communication avec le bot de POE"}, status=500)
+        except requests.exceptions.RequestException as e:
+            # Gestion des erreurs de requête
+            return JsonResponse({"error": str(e)}, status=500)
     else:
-        # Réponse pour les méthodes non autorisées
         return JsonResponse({"error": "Méthode non autorisée"}, status=405)
