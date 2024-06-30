@@ -5,6 +5,7 @@ document.getElementById("send-btn").addEventListener("click", function() {
 
     // Afficher le message de l'utilisateur dans la liste
     var userMessageElement = document.createElement("li");
+    console.log(userMessageElement);
     userMessageElement.classList.add("list-group-item");
     userMessageElement.textContent = "Vous: " + message;
     chatList.appendChild(userMessageElement);

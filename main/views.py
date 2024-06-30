@@ -1,14 +1,17 @@
 import json
 import os
 
+import openai
 import requests  # Assurez-vous d'importer requests
+from django.contrib import auth
+from django.contrib.auth.models import User
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from dotenv import load_dotenv
 
-from .models import BlogPost
+from .models import BlogPost, Chat
 
 # Charger les variables d'environnement
 load_dotenv()
@@ -34,42 +37,74 @@ def createBlogPost(request):
 
 #https://poe.com/BotPoeGratuitEssai1
 
+# Configurez votre clé API OpenAI ici
 
+openai.api_key = os.getenv("OPEN_API_KEY")
 
-@csrf_exempt
-def chatbot_api(request):
-    if request.method == "GET":
-        return render(request, 'chatbot.html')
-    elif request.method == "POST":
-        data = json.loads(request.body)
-        message = data.get("message")
-        
-        # URL de l'API de ChatGPT
-        chatgpt_url = "https://api.openai.com/v1/chat/completions"
-        
-        # Préparation de la requête à l'API de ChatGPT
-        payload = json.dumps({
-            "model": "gpt-3.5-turbo",
-            "messages": [{"role": "user", "content": message}]
-        })
-        headers = {
-            'Content-Type': 'application/json',
-            'Authorization': f'Bearer {os.getenv("OPEN_API_KEY")}'
-        }
-        
-        try:
-            # Envoi de la requête à l'API de ChatGPT
-            response = requests.post(chatgpt_url, data=payload, headers=headers)
-            
-            # Vérification que la requête a réussi
-            if response.status_code == 200:
-                # Extraction de la réponse de ChatGPT
-                chatgpt_response = response.json()
-                return JsonResponse({"response": chatgpt_response})
-            else:
-                return JsonResponse({"error": "Erreur lors de la communication avec ChatGPT"}, status=500)
-        except requests.exceptions.RequestException as e:
-            # Gestion des erreurs de requête
-            return JsonResponse({"error": str(e)}, status=500)
+def ask_openai(message):
+    response = openai.ChatCompletion.create(
+        model="gpt-4",
+        messages=[
+            {"role": "system", "content": "You are a helpful assistant."},
+            {"role": "user", "content": message},
+        ]
+    )
+    answer = response.choices[0].message.content.strip()
+    return answer
+
+def chatbot(request):
+    if request.user.is_authenticated:
+        chats = Chat.objects.filter(user=request.user)
     else:
-        return JsonResponse({"error": "Méthode non autorisée"}, status=405)
+        chats = []
+
+    if request.method == 'POST':
+        message = request.POST.get('message')
+        response = ask_openai(message)
+
+        if request.user.is_authenticated:
+            chat = Chat(user=request.user, message=message, response=response, created_at=timezone.now())
+            chat.save()
+        return JsonResponse({'message': message, 'response': response})
+
+    return render(request, 'chatbot.html', {'chats': chats})
+
+
+def login(request):
+    if request.method == 'POST':
+        username = request.POST['username']
+        password = request.POST['password']
+        user = auth.authenticate(request, username=username, password=password)
+        if user is not None:
+            auth.login(request, user)
+            return redirect('chatbot')
+        else:
+            error_message = 'Invalid username or password'
+            return render(request, 'login.html', {'error_message': error_message})
+    else:
+        return render(request, 'login.html')
+
+def register(request):
+    if request.method == 'POST':
+        username = request.POST['username']
+        email = request.POST['email']
+        password1 = request.POST['password1']
+        password2 = request.POST['password2']
+
+        if password1 == password2:
+            try:
+                user = User.objects.create_user(username, email, password1)
+                user.save()
+                auth.login(request, user)
+                return redirect('chatbot')
+            except:
+                error_message = 'Error creating account'
+                return render(request, 'register.html', {'error_message': error_message})
+        else:
+            error_message = 'Password dont match'
+            return render(request, 'register.html', {'error_message': error_message})
+    return render(request, 'register.html')
+
+def logout(request):
+    auth.logout(request)
+    return redirect('login')
