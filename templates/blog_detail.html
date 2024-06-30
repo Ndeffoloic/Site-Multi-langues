@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load i18n %}
 
 {% block content %}
 <div class="container mt-5">
@@ -7,7 +8,7 @@
             <!-- Blog post header -->
             <header class="mb-4">
                 <h1 class="fw-bolder mb-1">{{ blog.title }}</h1>
-                <div class="text-muted fst-italic mb-2">Publié le {{ blog.publication_date|date:"d M Y à H:i" }}</div>
+                <div class="text-muted fst-italic mb-2">{% trans 'Publié le' %} {{ blog.publication_date|date:"DATE_FORMAT" }}</div>
                 {% if blog.image %}
                 <figure class="mb-4">
                     <img class="img-fluid rounded" src="{{ blog.image.url }}" alt="{{ blog.title }}">

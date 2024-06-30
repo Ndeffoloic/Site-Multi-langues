@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-06-30 07:16+0200\n"
+"POT-Creation-Date: 2024-06-30 16:39+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1230,4 +1230,36 @@ msgstr ""
 
 #: .\multilang_stie_venv\Lib\site-packages\django\views\templates\default_urlconf.html:248
 msgid "Connect, get help, or contribute"
+msgstr ""
+
+#: .\templates\base.html:8
+msgid "Site Multilangues"
+msgstr ""
+
+#: .\templates\blog_detail.html:11
+msgid "Publié le"
+msgstr ""
+
+#: .\templates\blog_list.html:6
+msgid "Liste des blogs"
+msgstr ""
+
+#: .\templates\blog_list.html:19
+msgid "Lire plus"
+msgstr ""
+
+#: .\templates\nav_bar.html:11
+msgid "Blogs disponibles"
+msgstr ""
+
+#: .\templates\nav_bar.html:14
+msgid "Créer un blog"
+msgstr ""
+
+#: .\templates\nav_bar.html:17
+msgid "Services"
+msgstr ""
+
+#: .\templates\nav_bar.html:20
+msgid "Contact"
 msgstr ""

@@ -1,8 +1,9 @@
 {% extends 'base.html' %}
+{% load i18n %}
 
 {% block content %}
 <h1 class="text-center display-3">
-Liste des blogs
+{% trans 'Liste des blogs' %}
 </h1>
 
 <div class="row align-items-stretch">
@@ -15,7 +16,7 @@ Liste des blogs
             <div class="card-body">
                 <h5 class="card-title">{{ blog.title }}</h5>
                 <p class="card-text">{{ blog.content|truncatewords:30 }}</p>
-                <a href="{% url 'detail' blog.id %}" class="btn btn-primary">Lire plus</a>
+                <a href="{% url 'detail' blog.id %}" class="btn btn-primary">{% trans 'Lire plus' %}</a>
             </div>
         </div>
     </div>
