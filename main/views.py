@@ -9,3 +9,7 @@ def article_list(request, *args, **kwargs):
     # Utilisez BlogPost.objects.all() pour récupérer tous les objets BlogPost
     articles = BlogPost.objects.all()
     return render(request, 'article_list.html', {'articles': articles})
+
+def createBlogPost(request):
+    # Logique pour traiter la requête, si nécessaire
+    return render(request, 'article/createBlogPost.html')
