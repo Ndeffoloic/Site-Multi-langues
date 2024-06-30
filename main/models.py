@@ -7,3 +7,6 @@ class BlogPost(models.Model):
     content = models.TextField()
     publication_date = models.DateTimeField(auto_now_add=True)
     image = models.ImageField(upload_to='blog_images/', blank=True, null=True)
+    
+    def __str__(self):
+        return self.title

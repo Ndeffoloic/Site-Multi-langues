@@ -16,8 +16,9 @@ def createBlogPost(request):
     if request.method == "POST":
         title = request.POST.get('title')
         content = request.POST.get('content')
-        # Création d'une nouvelle instance de BlogPost
-        new_post = BlogPost(title=title, content=content, publication_date=timezone.now())
+        image = request.FILES.get('image')  # Récupération de l'image à partir de request.FILES
+        # Création d'une nouvelle instance de BlogPost avec l'image
+        new_post = BlogPost(title=title, content=content, publication_date=timezone.now(), image=image)
         new_post.save()  # Enregistrement de l'instance dans la base de données
         return redirect('blog_list')  # Redirection vers la liste des blogs après la création
     return render(request, 'blog/createBlogPost.html')

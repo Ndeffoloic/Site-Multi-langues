@@ -1,0 +1,10 @@
+.card-img-top {
+    height: 150px; /* Hauteur fixe pour toutes les images */
+    object-fit: cover; /* Garde l'aspect ratio de l'image */
+    width: 100%; /* Assure que l'image couvre toute la largeur du card */
+}
+
+.card-text {
+    height: 100px; /* Hauteur fixe pour le texte */
+    overflow: hidden; /* Cache le texte qui dépasse la hauteur fixe */
+}
