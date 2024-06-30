@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1 class="text-center display-3">
+Liste des blogs
+</h1>
+
+<div class="row align-items-stretch">
+{% for blog in blogs %}
+    <div class="col-md-4">
+        <div class="card" style="width: 18rem;">
+            {% if blog.image %}
+            <img src="{{ blog.image.url }}" class="card-img-top" alt="{{ blog.title }}">
+            {% endif %}
+            <div class="card-body">
+                <h5 class="card-title">{{ blog.title }}</h5>
+                <p class="card-text">{{ blog.content|truncatewords:30 }}</p>
+                <a href="{% url 'detail' blog.id %}" class="btn btn-primary">Lire plus</a>
+            </div>
+        </div>
+    </div>
+{% endfor %}
+</div>
+{% endblock %}
