@@ -16,8 +16,7 @@ SECRET_KEY = config('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG')
 
-ALLOWED_HOSTS = ['localhost','127.0.0.1','https://multilang-site-wguu.onrender.com']
-
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'multilang-site-wguu.onrender.com']
 
 # Application definition
 
