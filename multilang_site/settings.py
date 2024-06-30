@@ -75,7 +75,7 @@ WSGI_APPLICATION = 'multilang_site.wsgi.application'
 #     }
 # }
 
-DATABASE = {
+DATABASES = {
     'default' : dj_database_url.parse(config('DATABASE_URL'))
 }
 
@@ -126,10 +126,10 @@ LOCALE_PATHS = [
 
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [
-    BASE_DIR / 'static'
+    BASE_DIR / 'static',  # Ce dossier est pour vos fichiers statiques en développement
 ]
 
-STATIC_ROOT = BASE_DIR / 'static'
+STATIC_ROOT = BASE_DIR / 'staticfiles'  # Ce dossier est pour collecter les fichiers statiques pour la production
 
 
 # Configurer les fichiers médias
