@@ -1,5 +1,9 @@
+import json
+
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from django.views.decorators.csrf import csrf_exempt
 
 from .models import BlogPost
 
@@ -23,6 +27,17 @@ def createBlogPost(request):
         return redirect('blog_list')  # Redirection vers la liste des blogs après la création
     return render(request, 'blog/createBlogPost.html')
 
-def chatbot(request):
-    # Ici, vous pouvez ajouter la logique pour intégrer votre modèle de LLM ou RAG pour la conversation
-    return render(request, 'chatbot.html')
+@csrf_exempt
+def chatbot_api(request):
+    if request.method == "GET":
+        # Rendre l'interface utilisateur du chatbot pour les requêtes GET
+        return render(request, 'chatbot.html')
+    elif request.method == "POST":
+        data = json.loads(request.body)
+        message = data.get("message")
+        # Logique existante pour traiter le message
+        response_message = "Echo: " + message
+        return JsonResponse({"response": response_message})
+    else:
+        # Réponse pour les méthodes non autorisées
+        return JsonResponse({"error": "Méthode non autorisée"}, status=405)
