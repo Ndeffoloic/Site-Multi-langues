@@ -1,13 +1,17 @@
 import json
+import os
 
 import requests  # Assurez-vous d'importer requests
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
+from dotenv import load_dotenv
 
 from .models import BlogPost
 
+# Charger les variables d'environnement
+load_dotenv()
 
 def blog_list(request, *args, **kwargs):
     blogs = BlogPost.objects.all()
@@ -40,24 +44,30 @@ def chatbot_api(request):
         data = json.loads(request.body)
         message = data.get("message")
         
-        # URL de l'API du bot de POE
-        poe_bot_url = "https://poe.com/BotPoeGratuitEssai1"
+        # URL de l'API de ChatGPT
+        chatgpt_url = "https://api.openai.com/v1/chat/completions"
         
-        # Préparation de la requête à l'API du bot
-        payload = json.dumps({"message": message})
-        headers = {'Content-Type': 'application/json'}
+        # Préparation de la requête à l'API de ChatGPT
+        payload = json.dumps({
+            "model": "gpt-3.5-turbo",
+            "messages": [{"role": "user", "content": message}]
+        })
+        headers = {
+            'Content-Type': 'application/json',
+            'Authorization': f'Bearer {os.getenv("OPEN_API_KEY")}'
+        }
         
         try:
-            # Envoi de la requête à l'API du bot de POE
-            response = requests.post(poe_bot_url, data=payload, headers=headers)
+            # Envoi de la requête à l'API de ChatGPT
+            response = requests.post(chatgpt_url, data=payload, headers=headers)
             
             # Vérification que la requête a réussi
             if response.status_code == 200:
-                # Extraction de la réponse du bot
-                bot_response = response.json()
-                return JsonResponse({"response": bot_response})
+                # Extraction de la réponse de ChatGPT
+                chatgpt_response = response.json()
+                return JsonResponse({"response": chatgpt_response})
             else:
-                return JsonResponse({"error": "Erreur lors de la communication avec le bot de POE"}, status=500)
+                return JsonResponse({"error": "Erreur lors de la communication avec ChatGPT"}, status=500)
         except requests.exceptions.RequestException as e:
             # Gestion des erreurs de requête
             return JsonResponse({"error": str(e)}, status=500)
