@@ -16,7 +16,7 @@ SECRET_KEY = config('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG')
 
-ALLOWED_HOSTS = ['localhost','127.0.0.1','site-multi-langues-o5m7.onrender.com']
+ALLOWED_HOSTS = config('ALLOWED_HOSTS')
 
 
 # Application definition
@@ -73,7 +73,8 @@ WSGI_APPLICATION = 'multilang_site.wsgi.application'
 #         'ENGINE': 'django.db.backends.sqlite3',
 #         'NAME': BASE_DIR / 'db.sqlite3',
 #     }
-# }
+#wsgi : webserver gateway interface 
+# }gunicorn multilang_site.wsgi:application
 
 DATABASES = {
     'default' : dj_database_url.parse(config('DATABASE_URL'))
