@@ -37,27 +37,55 @@ def createBlogPost(request):
 
 #https://poe.com/BotPoeGratuitEssai1
 
-# Configurez votre clé API OpenAI ici
+# Configurez votre clé secrète Direct Line ici
+DIRECT_LINE_SECRET = "ca2f6332-8734-4099-bb6b-a15e2e92fbfe"
+DIRECT_LINE_ENDPOINT = "https://directline.botframework.com/v3/directline/conversations/"
 
-openai.api_key = os.getenv("OPEN_API_KEY")
+headers = {'Authorization': 'Bearer ' + DIRECT_LINE_SECRET}
 
-openai.api_key = os.getenv("OPEN_API_KEY")
+def start_conversation():
+    response = requests.post(DIRECT_LINE_ENDPOINT, headers=headers)
+    if response.status_code == 201:
+        conversation_id = response.json()['conversationId']
+        return conversation_id
+    return None
 
-def ask_openai(message):
-    print(message)
-    response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",  # ou un autre modèle selon vos besoins
-        messages=[
-            {"role": "system", "content": "You are a helpful assistant."},
-            {"role": "user", "content": message},
-        ]
-    )
-    answer = response['choices'][0]['message']['content']
+def send_message(conversation_id, message):
+    message_endpoint = f"{DIRECT_LINE_ENDPOINT}{conversation_id}/activities"
+    json_data = {
+        "type": "message",
+        "from": {"id": "user1"},
+        "text": message
+    }
+    response = requests.post(message_endpoint, headers=headers, json=json_data)
+    return response
+
+def get_messages(conversation_id):
+    message_endpoint = f"{DIRECT_LINE_ENDPOINT}{conversation_id}/activities"
+    response = requests.get(message_endpoint, headers=headers)
+    if response.status_code == 200:
+        messages = response.json()['activities']
+        return messages
+    return []
+
+def ask_bot_framework(message):
+    conversation_id = start_conversation()
+    if conversation_id:
+        send_message_response = send_message(conversation_id, message)
+        if send_message_response.status_code == 200:
+            messages = get_messages(conversation_id)
+            # Filtre les messages pour obtenir la réponse du bot
+            bot_messages = [msg for msg in messages if msg['from']['id'] != 'user1']
+            if bot_messages:
+                # Retourne le dernier message du bot
+                return bot_messages[-1]['text']
+    return "Désolé, je ne peux pas répondre à votre question en ce moment."
 
 def chatbot(request):
     if request.method == 'POST':
-        message = request.POST.get('message')
-        response = ask_openai(message)
+        data = json.loads(request.body)
+        message = data.get('message')
+        response = ask_bot_framework(message)
         return JsonResponse({'message': message, 'response': response})
 
     return render(request, 'chatbot.html')
