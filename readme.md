@@ -1,6 +1,8 @@
-# README du projet de NEMBOT Loïc 
 
-Ce fichier README contient les instructions pour lancer le projet après avoir cloné le dépôt.
+#30 juin 2024 05:45 UTC+2 | Création du multilang_site
+#Candidat: Loïc NEMBOT, étudiant en 4A IA2R à Polytech Nancy
+#Ce fichier README contient les instructions pour lancer le projet après avoir cloné le dépôt.
+
 
 ## Prérequis
 Tous les modules 
@@ -69,11 +71,10 @@ si vous voulez vous connecter en temps que superutilisateur/superadministrateur,
 - Utilisation de l'API de Chatgpt et création d'une clé d'API
 - Difficultés pour obtenir la réponse de Chatgpt, implémentation des fonctions de login/logout et register  en attendant
 - Essai d'implémentation du bot framework de Azure : Echec. 
+-J'ai utilisé Bing AI tout le long pour corriger certains bugs et m'aider lorsque je voulais implémenter le bot / l'api d'Azure. 
 
 Temps de réalisation : J'ai commencé le site le 29 juin, mais après avoir rencontré certaines erreurs, j'ai abandonné l'ancienne version pour reprendre celle que je vous soumets. Ainsi, j'ai réalisé le projet ci-joint en 8 heures et l'ancienne version en deux heures.
 
-30 juin 2024 05:45 UTC+2 | Création du multilang_site
-Candidat: Loïc NEMBOT, étudiant en 4A IA2R à Polytech Nancy
 
 Petites précisions
 J'avais fait mon emploi du temps de cette semaine en allouant le weekend à la réalisation de ce site, et ce, avant que vous ne précisiez que nous devons finir le test avant le 30 juin. De ce fait, j'ai fini le test le 30 juin.
