@@ -36,61 +36,39 @@ def createBlogPost(request):
     return render(request, 'blog/createBlogPost.html')
 
 #https://poe.com/BotPoeGratuitEssai1
+openai_api_key = os.getenv('OPEN_API_KEY')
+openai.api_key = openai_api_key
 
-# Configurez votre clé secrète Direct Line ici
-DIRECT_LINE_SECRET = "ca2f6332-8734-4099-bb6b-a15e2e92fbfe"
-DIRECT_LINE_ENDPOINT = "https://directline.botframework.com/v3/directline/conversations/"
+def ask_openai(message):
+    try:
+        print("Le message envoyé à Chatgpt est :", message)
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant."},
+                {"role": "user", "content": message},
+            ],
+            max_tokens=150,
+            n=1,
+            stop=None,
+            temperature=0.7,
+        )
+        print(response)
+        answer = response.choices[0].message['content'].strip()
+        return answer
+    except openai.error.RateLimitError:
+        return "Désolé, vous avez dépassé votre quota d'utilisation de l'API OpenAI. Veuillez vérifier votre plan et vos détails de facturation."
 
-headers = {'Authorization': 'Bearer ' + DIRECT_LINE_SECRET}
-
-def start_conversation():
-    response = requests.post(DIRECT_LINE_ENDPOINT, headers=headers)
-    if response.status_code == 201:
-        conversation_id = response.json()['conversationId']
-        return conversation_id
-    return None
-
-def send_message(conversation_id, message):
-    message_endpoint = f"{DIRECT_LINE_ENDPOINT}{conversation_id}/activities"
-    json_data = {
-        "type": "message",
-        "from": {"id": "user1"},
-        "text": message
-    }
-    response = requests.post(message_endpoint, headers=headers, json=json_data)
-    return response
-
-def get_messages(conversation_id):
-    message_endpoint = f"{DIRECT_LINE_ENDPOINT}{conversation_id}/activities"
-    response = requests.get(message_endpoint, headers=headers)
-    if response.status_code == 200:
-        messages = response.json()['activities']
-        return messages
-    return []
-
-def ask_bot_framework(message):
-    conversation_id = start_conversation()
-    if conversation_id:
-        send_message_response = send_message(conversation_id, message)
-        if send_message_response.status_code == 200:
-            messages = get_messages(conversation_id)
-            # Filtre les messages pour obtenir la réponse du bot
-            bot_messages = [msg for msg in messages if msg['from']['id'] != 'user1']
-            if bot_messages:
-                # Retourne le dernier message du bot
-                return bot_messages[-1]['text']
-    return "Désolé, je ne peux pas répondre à votre question en ce moment."
-
+@csrf_exempt
 def chatbot(request):
     if request.method == 'POST':
-        data = json.loads(request.body)
-        message = data.get('message')
-        response = ask_bot_framework(message)
+        body_unicode = request.body.decode('utf-8')
+        body = json.loads(body_unicode)
+        message = body.get('message')
+        response = ask_openai(message)
         return JsonResponse({'message': message, 'response': response})
-
     return render(request, 'chatbot.html')
-
-
+  
 def login(request):
     if request.method == 'POST':
         username = request.POST['username']

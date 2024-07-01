@@ -26,6 +26,9 @@ document.getElementById("send-btn").addEventListener("click", function() {
         botMessageElement.classList.add("list-group-item");
         botMessageElement.textContent = "Chatbot: " + data.response;
         chatList.appendChild(botMessageElement);
+
+        // Vider la case de saisie
+        document.getElementById("chat-input").value = '';
     })
     .catch(error => console.error('Error:', error));
 });
