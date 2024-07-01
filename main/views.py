@@ -39,26 +39,48 @@ def createBlogPost(request):
 openai_api_key = os.getenv('OPEN_API_KEY')
 openai.api_key = openai_api_key
 
-def ask_openai(message):
-    try:
-        print("Le message envoyé à Chatgpt est :", message)
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": "You are a helpful assistant."},
-                {"role": "user", "content": message},
-            ],
-            max_tokens=150,
-            n=1,
-            stop=None,
-            temperature=0.7,
-        )
-        print(response)
-        answer = response.choices[0].message['content'].strip()
-        return answer
-    except openai.error.RateLimitError:
-        return "Désolé, vous avez dépassé votre quota d'utilisation de l'API OpenAI. Veuillez vérifier votre plan et vos détails de facturation."
+import requests
+from requests.exceptions import HTTPError, RequestException
 
+
+def ask_openai(message):
+    session = requests.Session()  # Utilisation d'une session pour les requêtes
+    headers = {
+        "Authorization": f"Bearer {openai_api_key}",
+        "Content-Type": "application/json",
+    }
+    payload = {
+        "model": "gpt-3.5-turbo",
+        "messages": [
+            {"role": "system", "content": "You are a helpful assistant."},
+            {"role": "user", "content": message},
+        ],
+        "max_tokens": 150,
+        "n": 1,
+        "stop": None,
+        "temperature": 0.7,
+    }
+    try:
+        response = session.post("https://api.openai.com/v1/chat/completions", json=payload, headers=headers)
+        response.raise_for_status()  # Cela va lever une exception pour les réponses 4xx/5xx
+        data = response.json()
+        answer = data['choices'][0]['message']['content'].strip()
+        return answer
+    except HTTPError as http_err:
+        print(f"HTTP error occurred: {http_err}")
+        try:
+            error_response = response.json()
+            print(error_response)
+        except ValueError:  # inclut simplejson.decoder.JSONDecodeError
+            print("Le corps de la réponse n'est pas un JSON valide.")
+        return "Une erreur HTTP s'est produite. Veuillez réessayer plus tard."
+    except RequestException as req_err:
+        print(f"Request error occurred: {req_err}")
+        return "Une erreur de requête s'est produite. Veuillez vérifier votre connexion Internet."
+    finally:
+        session.close()  # Fermeture de la session après l'opération
+        
+        
 @csrf_exempt
 def chatbot(request):
     if request.method == 'POST':
