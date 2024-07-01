@@ -10,7 +10,7 @@ Tous les modules
 ## Installation
 1. Clonez le dépôt sur votre machine en utilisant la commande suivante :
     ```
-    git clone https://github.com/votre-utilisateur/votre-depot.git
+    git clone https://github.com/Ndeffoloic/Site-Multi-langues
     ```
 
 2. Accédez au répertoire du projet :
@@ -37,11 +37,6 @@ ou exécuter la commande suivante :
 ```
 python manage.py runserver
 ```
-
-Cela démarrera l'application et vous pourrez y accéder via votre navigateur à l'adresse `http://localhost:8000`
-si vous voulez vous connecter en temps que superutilisateur/superadministrateur, et avoir accès à la base de données, ajoutez : "/admin" à la fin de l'url et utilisez les identifiants suivants : 
--loicn
--`99@lhMultilang.@00`
 
 ## Etapes de réalisation : 
 
