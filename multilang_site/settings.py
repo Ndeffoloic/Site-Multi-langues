@@ -134,7 +134,7 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'  # Ce dossier est pour collecter les fich
 
 # Configurer les fichiers médias
 MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+MEDIA_ROOT = '/var/main_media'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
