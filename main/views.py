@@ -77,6 +77,9 @@ def ask_openai(message):
     except RequestException as req_err:
         print(f"Request error occurred: {req_err}")
         return "Une erreur de requête s'est produite. Veuillez vérifier votre connexion Internet."
+    except openai.error.RateLimitError:
+        return "Désolé, vous avez dépassé votre quota d'utilisation de l'API OpenAI. Veuillez vérifier votre plan et vos détails de facturation."
+
     finally:
         session.close()  # Fermeture de la session après l'opération
         
