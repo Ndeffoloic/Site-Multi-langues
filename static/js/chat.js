@@ -4,7 +4,7 @@ document.querySelector("#send-btn").addEventListener("click", function(event) {
     var chatList = document.getElementById("chat-list");
     var userLang = navigator.language || navigator.userLanguage; // Récupérer la langue de l'utilisateur
 
-    if (message.trim() !== "") { // Assurez-vous que le message n'est pas vide
+    if (message.trim() !== "" && message.length != 0) { // Assurez-vous que le message n'est pas vide
         // Afficher le message de l'utilisateur dans la liste
         var userMessageElement = document.createElement("li");
         userMessageElement.classList.add("list-group-item", "text-right"); // Classe Bootstrap pour aligner à droite
