@@ -1,12 +1,13 @@
 import json
 import os
 
-import openai
+import openllm
 import requests
 from django.contrib import auth
 from django.contrib.auth.models import User
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from transformers import AutoTokenizer, AutoModelForCausalLM
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from dotenv import load_dotenv
@@ -64,57 +65,16 @@ def createBlogPost(request):
         return redirect('blog_list')  # Redirection vers la liste des blogs après la création
     return render(request, 'blog/createBlogPost.html')
 
-# https://poe.com/BotPoeGratuitEssai1
-openai_api_key = os.getenv('OPEN_API_KEY')
-openai.api_key = openai_api_key
 
-def ask_openai(message):
-    """
-    Envoie une requête à l'API OpenAI avec un message utilisateur et retourne la réponse.
+# Initialisation du modèle et du tokenizer
+tokenizer = AutoTokenizer.from_pretrained("meta-llama/Meta-Llama-3-8B")
+model = AutoModelForCausalLM.from_pretrained("meta-llama/Meta-Llama-3-8B")
 
-    Args:
-        message: Le message de l'utilisateur.
-
-    Returns:
-        La réponse de l'API OpenAI ou un message d'erreur en cas de problème.
-    """
-    session = requests.Session()  # Utilisation d'une session pour les requêtes
-    headers = {
-        "Authorization": f"Bearer {openai_api_key}",
-        "Content-Type": "application/json",
-    }
-    payload = {
-        "model": "gpt-3.5-turbo",
-        "messages": [
-            {"role": "system", "content": "You are a helpful assistant."},
-            {"role": "user", "content": message},
-        ],
-        "max_tokens": 150,
-        "n": 1,
-        "stop": None,
-        "temperature": 0.7,
-    }
-    try:
-        response = session.post("https://api.openai.com/v1/chat/completions", json=payload, headers=headers)
-        response.raise_for_status()  # Cela va lever une exception pour les réponses 4xx/5xx
-        data = response.json()
-        answer = data['choices'][0]['message']['content'].strip()
-        return answer
-    except HTTPError as http_err:
-        print(f"HTTP error occurred: {http_err}")
-        try:
-            error_response = response.json()
-            print(error_response)
-        except ValueError:  # Inclut simplejson.decoder.JSONDecodeError
-            print("Le corps de la réponse n'est pas un JSON valide.")
-        return "Une erreur HTTP s'est produite. Veuillez réessayer plus tard."
-    except RequestException as req_err:
-        print(f"Request error occurred: {req_err}")
-        return "Une erreur de requête s'est produite. Veuillez vérifier votre connexion Internet."
-    except openai.error.RateLimitError:
-        return "Désolé, vous avez dépassé votre quota d'utilisation de l'API OpenAI. Veuillez vérifier votre plan et vos détails de facturation."
-    finally:
-        session.close()  # Fermeture de la session après l'opération
+def generate_text(input_text):
+    inputs = tokenizer(input_text, return_tensors="pt")
+    outputs = model.generate(**inputs)
+    generated_text = tokenizer.decode(outputs[0], skip_special_tokens=True)
+    return generated_text
 
 @csrf_exempt
 def chatbot(request):
@@ -132,8 +92,12 @@ def chatbot(request):
         body_unicode = request.body.decode('utf-8')
         body = json.loads(body_unicode)
         message = body.get('message')
-        response = ask_openai(message)
-        return JsonResponse({'message': message, 'response': response})
+        
+        # Utiliser la fonction generate_text pour obtenir la réponse du chatbot
+        response_text = generate_text(message)
+        
+        return JsonResponse({'message': message, 'response': response_text})
+    
     return render(request, 'chatbot.html')
 
 def login(request):
