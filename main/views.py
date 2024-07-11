@@ -1,8 +1,6 @@
 import json
 import os
 
-import openllm
-import requests
 from django.contrib import auth
 from django.contrib.auth.models import User
 from django.http import JsonResponse
@@ -66,16 +64,22 @@ def createBlogPost(request):
     return render(request, 'blog/createBlogPost.html')
 
 
-# Initialisation du modèle et du tokenizer
-tokenizer = AutoTokenizer.from_pretrained("meta-llama/Meta-Llama-3-8B")
-model = AutoModelForCausalLM.from_pretrained("meta-llama/Meta-Llama-3-8B")
+# Initialisation du modèle et du tokenizer avec Falcon
+try:
+    tokenizer = AutoTokenizer.from_pretrained("tiiuae/falcon-7b")
+    model = AutoModelForCausalLM.from_pretrained("tiiuae/falcon-7b")
+except Exception as e:
+    print(f"Error loading model: {e}")
 
 def generate_text(input_text):
-    inputs = tokenizer(input_text, return_tensors="pt")
-    outputs = model.generate(**inputs)
-    generated_text = tokenizer.decode(outputs[0], skip_special_tokens=True)
-    return generated_text
-
+    try:
+        inputs = tokenizer(input_text, return_tensors="pt")
+        outputs = model.generate(**inputs)
+        generated_text = tokenizer.decode(outputs[0], skip_special_tokens=True)
+        return generated_text
+    except Exception as e:
+        return f"Error generating text: {e}"
+    
 @csrf_exempt
 def chatbot(request):
     """
