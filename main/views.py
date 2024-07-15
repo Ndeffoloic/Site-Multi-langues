@@ -64,37 +64,37 @@ def createBlogPost(request):
         return redirect('blog_list')  # Redirection vers la liste des blogs après la création
     return render(request, 'blog/createBlogPost.html')
 
+
 # Charger la clé API de Hugging Face depuis les variables d'environnement
 HF_TOKEN = os.getenv('HF_TOKEN')
 
-# Initialisation du client d'inférence avec le modèle tiiuae/falcon-7b-instruct
-repo_id = "tiiuae/falcon-7b-instruct"
-API_URL = f"https://api-inference.huggingface.co/models/{repo_id}"
-HEADERS = {"Authorization": f"Bearer {HF_TOKEN}"}
+repo_id = "microsoft/Phi-3-mini-4k-instruct"
+llm_client = InferenceClient(model=repo_id, token=HF_TOKEN, timeout=120)
 
-def call_llm(prompt: str):
+def call_llm(inference_client: InferenceClient, prompt: str):
     """
     Appelle l'API Hugging Face pour générer du texte à partir du prompt.
 
     Args:
+        inference_client (InferenceClient): Le client d'inférence Hugging Face.
         prompt (str): Le texte d'entrée pour la génération.
 
     Returns:
         str: Le texte généré par le modèle.
     """
-    response = requests.post(
-        API_URL,
-        headers=HEADERS,
+    response = inference_client.post(
         json={
             "inputs": prompt,
-            "parameters": {"max_new_tokens": 200},
+            "parameters": {
+                "max_new_tokens": 200,
+                "temperature": 0.7,
+                "top_p": 0.9,
+                "top_k": 50
+            },
             "task": "text-generation",
         },
     )
-    if response.status_code == 200:
-        return response.json()[0]["generated_text"]
-    else:
-        return f"Error: {response.status_code} - {response.text}"
+    return json.loads(response.decode())[0]["generated_text"]
 
 @csrf_exempt
 def chatbot(request):
@@ -113,8 +113,9 @@ def chatbot(request):
         body = json.loads(body_unicode)
         message = body.get('message')
         
-        response_text = call_llm(message)
-        print(response_text)
+        # Utiliser la fonction call_llm pour obtenir la réponse du chatbot
+        response_text = call_llm(llm_client, message)
+        
         return JsonResponse({'message': message, 'response': response_text})
     
     return render(request, 'chatbot.html')
