@@ -65,60 +65,73 @@ def createBlogPost(request):
     return render(request, 'blog/createBlogPost.html')
 
 
-# Charger la clé API de Hugging Face depuis les variables d'environnement
+# Charger la clé API de Hugging Face et l'endpoint personnalisé depuis les variables d'environnement
 HF_TOKEN = os.getenv('HF_TOKEN')
+HUGGING_FACE_ENDPOINT = os.getenv('HUGGING_FACE_ENDPOINT')
 
-repo_id = "microsoft/Phi-3-mini-4k-instruct"
-llm_client = InferenceClient(model=repo_id, token=HF_TOKEN, timeout=120)
-
-def call_llm(inference_client: InferenceClient, prompt: str):
+def call_llm(prompt: str):
     """
     Appelle l'API Hugging Face pour générer du texte à partir du prompt.
 
     Args:
-        inference_client (InferenceClient): Le client d'inférence Hugging Face.
         prompt (str): Le texte d'entrée pour la génération.
 
     Returns:
         str: Le texte généré par le modèle.
     """
-    response = inference_client.post(
-        json={
-            "inputs": prompt,
-            "parameters": {
-                "max_new_tokens": 200,
-                "temperature": 0.7,
-                "top_p": 0.9,
-                "top_k": 50
-            },
-            "task": "text-generation",
-        },
-    )
-    return json.loads(response.decode())[0]["generated_text"]
+    headers = {
+        "Authorization": f"Bearer {HF_TOKEN}",
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "inputs": prompt,
+        "parameters": {
+            "max_new_tokens": 200,
+            "temperature": 0.7,
+            "top_p": 0.9,
+            "top_k": 50,
+            "repetition_penalty": 1.5  # Ajuster la pénalité de répétition pour réduire les répétitions
+        }
+    }
+    try:
+        response = requests.post(HUGGING_FACE_ENDPOINT, headers=headers, json=payload)
+        response.raise_for_status()
+        generated_text = response.json()[0]["generated_text"]
+        return generated_text
+    except requests.exceptions.RequestException as e:
+        return f"Request failed: {e}"
+
+def filter_repetitions(response_text):
+    """
+    Filtre les répétitions dans le texte généré.
+
+    Args:
+        response_text (str): Le texte généré par le modèle.
+
+    Returns:
+        str: Le texte filtré sans répétitions.
+    """
+    sentences = response_text.split('. ')
+    unique_sentences = []
+    for sentence in sentences:
+        if sentence not in unique_sentences:
+            unique_sentences.append(sentence)
+    return '. '.join(unique_sentences)
 
 @csrf_exempt
 def chatbot(request):
-    """
-    Gère les interactions avec le chatbot.
-
-    Args:
-        request: La requête HTTP.
-
-    Returns:
-        Une réponse JSON contenant le message de l'utilisateur et la réponse du chatbot.
-        Ou rend le template 'chatbot.html' pour les requêtes GET.
-    """
     if request.method == 'POST':
         body_unicode = request.body.decode('utf-8')
         body = json.loads(body_unicode)
         message = body.get('message')
         
-        # Utiliser la fonction call_llm pour obtenir la réponse du chatbot
-        response_text = call_llm(llm_client, message)
+        response_text = call_llm(message)
+        response_text = filter_repetitions(response_text)
         
         return JsonResponse({'message': message, 'response': response_text})
     
     return render(request, 'chatbot.html')
+
 
 def login(request):
     """
