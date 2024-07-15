@@ -1,14 +1,15 @@
 import json
 import os
 
+import requests
 from django.contrib import auth
 from django.contrib.auth.models import User
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
-from transformers import AutoTokenizer, AutoModelForCausalLM
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from dotenv import load_dotenv
+from huggingface_hub import InferenceClient
 
 from .models import BlogPost, Chat
 
@@ -63,23 +64,38 @@ def createBlogPost(request):
         return redirect('blog_list')  # Redirection vers la liste des blogs après la création
     return render(request, 'blog/createBlogPost.html')
 
+# Charger la clé API de Hugging Face depuis les variables d'environnement
+HF_TOKEN = os.getenv('HF_TOKEN')
 
-# Initialisation du modèle et du tokenizer avec Falcon
-try:
-    tokenizer = AutoTokenizer.from_pretrained("tiiuae/falcon-7b")
-    model = AutoModelForCausalLM.from_pretrained("tiiuae/falcon-7b")
-except Exception as e:
-    print(f"Error loading model: {e}")
+# Initialisation du client d'inférence avec le modèle tiiuae/falcon-7b-instruct
+repo_id = "tiiuae/falcon-7b-instruct"
+API_URL = f"https://api-inference.huggingface.co/models/{repo_id}"
+HEADERS = {"Authorization": f"Bearer {HF_TOKEN}"}
 
-def generate_text(input_text):
-    try:
-        inputs = tokenizer(input_text, return_tensors="pt")
-        outputs = model.generate(**inputs)
-        generated_text = tokenizer.decode(outputs[0], skip_special_tokens=True)
-        return generated_text
-    except Exception as e:
-        return f"Error generating text: {e}"
-    
+def call_llm(prompt: str):
+    """
+    Appelle l'API Hugging Face pour générer du texte à partir du prompt.
+
+    Args:
+        prompt (str): Le texte d'entrée pour la génération.
+
+    Returns:
+        str: Le texte généré par le modèle.
+    """
+    response = requests.post(
+        API_URL,
+        headers=HEADERS,
+        json={
+            "inputs": prompt,
+            "parameters": {"max_new_tokens": 200},
+            "task": "text-generation",
+        },
+    )
+    if response.status_code == 200:
+        return response.json()[0]["generated_text"]
+    else:
+        return f"Error: {response.status_code} - {response.text}"
+
 @csrf_exempt
 def chatbot(request):
     """
@@ -97,9 +113,8 @@ def chatbot(request):
         body = json.loads(body_unicode)
         message = body.get('message')
         
-        # Utiliser la fonction generate_text pour obtenir la réponse du chatbot
-        response_text = generate_text(message)
-        
+        response_text = call_llm(message)
+        print(response_text)
         return JsonResponse({'message': message, 'response': response_text})
     
     return render(request, 'chatbot.html')
