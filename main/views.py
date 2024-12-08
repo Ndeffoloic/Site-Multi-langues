@@ -80,32 +80,43 @@ def filter_repetitions(response_text):
 @csrf_exempt
 def chatbot(request):
     if request.method == 'POST':
-        # Récupération du message de l'utilisateur
-        message = request.POST.get('message', '').strip()
+        try:
+            # Récupération du message de l'utilisateur
+            body_unicode = request.body.decode('utf-8')
+            body = json.loads(body_unicode)
+            message = body.get('message', '').strip()
 
-        if not message:
-            return JsonResponse({'error': 'Le message est vide.'}, status=400)
+            if not message:
+                return JsonResponse({'error': 'Le message est vide.'}, status=400)
 
-        # Chargement du fichier PDF existant
-        chemin_pdf = os.path.join(settings.MEDIA_ROOT, 'manuscrit-SALHI.pdf')
-        if not os.path.exists(chemin_pdf):
-            return JsonResponse({'error': 'Le fichier de référence est introuvable.'}, status=500)
+            # Chargement du fichier PDF existant
+            chemin_pdf = os.path.join(settings.MEDIA_ROOT, 'manuscrit-SALHI.pdf')
+            if not os.path.exists(chemin_pdf):
+                return JsonResponse({'error': 'Le fichier de référence est introuvable.'}, status=500)
 
-        # Lecture et traitement du fichier PDF (cette partie peut être optimisée si déjà prétraitée)
-        texte_brut = lire_pdf(chemin_pdf)
-        textes = decouper_texte(texte_brut)
-        docsearch = initialiser_faiss(textes)
-        chain = charger_chaine_qa()
+            # Lecture et traitement du fichier PDF (cette partie peut être optimisée si déjà prétraitée)
+            texte_brut = lire_pdf(chemin_pdf)
+            textes = decouper_texte(texte_brut)
+            docsearch = initialiser_faiss(textes)
+            chain = charger_chaine_qa()
 
-        # Recherche et génération de réponse
-        documents_similaires = docsearch.similarity_search(message)
-        response_text = chain.run(input_documents=documents_similaires, question=message)
-        response_text = filter_repetitions(response_text)
+            # Recherche et génération de réponse
+            documents_similaires = docsearch.similarity_search(message)
+            response_text = chain.run(input_documents=documents_similaires, question=message)
+            response_text = filter_repetitions(response_text)
 
-        return JsonResponse({'response': response_text})
+            return JsonResponse({'response': response_text})
+
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Erreur lors du décodage du JSON.'}, status=400)
+        except UnicodeDecodeError:
+            return JsonResponse({'error': 'Erreur lors du décodage de la requête.'}, status=400)
+        except Exception as e:
+            return JsonResponse({'error': f'Erreur lors de la génération de la réponse: {str(e)}'}, status=500)
 
     # Pour les autres méthodes (GET, etc.)
     return render(request, 'chatbot.html')
+
 
 def login(request):
     if request.method == 'POST':

@@ -14,7 +14,7 @@
                     <!-- Les messages du chat seront ajoutés ici -->
                 </ul>
                 <div class="card-body">
-                    <div class="input-group"></div>
+                    <div class="input-group">
                         <input type="text" id="chat-input" class="form-control" placeholder="{% trans 'Tapez votre message...' %}">
                         <button class="btn btn-primary" type="button" id="send-btn">{% trans 'Envoyer' %}</button>
                     </div>
@@ -34,12 +34,13 @@
     sendButton.addEventListener('click', async () => {
         const message = chatInput.value;
 
-        const formData = new FormData();
-        formData.append('message', message);
-
         const response = await fetch('{% url "chatbot" %}', {
             method: 'POST',
-            body: formData
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({ message: message })
         });
 
         const data = await response.json();
