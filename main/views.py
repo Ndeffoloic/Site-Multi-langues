@@ -11,6 +11,8 @@ from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from dotenv import load_dotenv
 from huggingface_hub import InferenceClient
+from langchain.chains import (MapReduceDocumentsChain, MapRerankDocumentsChain,
+                              RefineDocumentsChain, StuffDocumentsChain)
 from langchain.chains.question_answering import load_qa_chain
 from langchain.text_splitter import CharacterTextSplitter
 from langchain_community.embeddings import OpenAIEmbeddings
@@ -57,8 +59,11 @@ def initialiser_faiss(textes):
     modeles_embedding = OpenAIEmbeddings()
     return FAISS.from_texts(textes, modeles_embedding)
 
+
 def charger_chaine_qa():
-    return load_qa_chain(OpenAI(), chain_type="stuff")
+    # Utilisez la nouvelle classe recommandée en fonction de votre besoin
+    # Par exemple, pour le type "stuff":
+    return StuffDocumentsChain(llm=OpenAI())
 
 def filter_repetitions(response_text):
     sentences = response_text.split('. ')
@@ -72,40 +77,29 @@ def filter_repetitions(response_text):
 def chatbot(request):
     if request.method == 'POST':
         try:
-            print("a0")
-            print(request.body)
             # Récupération du message de l'utilisateur
             body_unicode = request.body.decode('utf-8')
-            
             body = json.loads(body_unicode)
             message = body.get('message', '').strip()
-            print("a1")
+
             if not message:
                 return JsonResponse({'error': 'Le message est vide.'}, status=400)
-            print("a2")
 
             # Vérification et traitement du fichier téléversé
-            if 'file' not in request.FILES:
-                return JsonResponse({'error': 'Aucun fichier téléversé.'}, status=400)
-            print("a3")
-
-            fichier_pdf = request.FILES['file']
-            chemin_pdf = os.path.join(settings.MEDIA_ROOT, fichier_pdf.name)
-
-            with open(chemin_pdf, 'wb+') as destination:
-                for chunk in fichier_pdf.chunks():
-                    destination.write(chunk)
-
-            print("a4")
-            # Lecture et traitement du fichier PDF
-            with open(chemin_pdf, 'rb') as f:
-                reader = PdfReader(f)
+            if 'file' in request.FILES:
+                fichier_pdf = request.FILES['file']
+                # Lecture et traitement du fichier PDF
+                pdf_reader = PdfReader(fichier_pdf)
                 texte_brut = ""
-                for page in reader.pages:
+                for page in pdf_reader.pages:
                     texte_brut += page.extract_text()
-            print(texte_brut)
-            textes = decouper_texte(texte_brut)
-            docsearch = initialiser_faiss(textes)
+                print(texte_brut)
+                textes = decouper_texte(texte_brut)
+                
+                docsearch = initialiser_faiss(textes)
+            else:
+                print("aucun fichier")
+
             chain = charger_chaine_qa()
 
             # Recherche et génération de réponse
@@ -124,7 +118,6 @@ def chatbot(request):
 
     # Pour les autres méthodes (GET, etc.)
     return render(request, 'chatbot.html')
-
 
 def login(request):
     if request.method == 'POST':

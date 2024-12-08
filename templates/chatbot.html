@@ -35,63 +35,32 @@
     const fileInput = document.getElementById('file-input');
     const chatList = document.getElementById('chat-list');
 
-    sendButton.addEventListener('click', () => {
+    sendButton.addEventListener('click', async () => {
         const message = chatInput.value;
         const file = fileInput.files[0];
 
-        if (!message) {
-            alert('Veuillez entrer un message.');
-            return;
-        }
-
+        const formData = new FormData();
+        formData.append('message', message);
         if (file) {
-            const reader = new FileReader();
-            reader.onload = async (event) => {
-                const fileContent = event.target.result.split(',')[1]; // Base64 content
-                console.log(fileContent)
-                const response = await fetch('{% url "chatbot" %}', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': '{{ csrf_token }}'
-                    },
-                    body: JSON.stringify({
-                        message: message,
-                        file: {
-                            name: file.name,
-                            content: fileContent
-                        }
-                    })
-                });
-
-                const data = await response.json();
-                const responseElement = document.createElement('li');
-                responseElement.textContent = data.response || 'Erreur lors de la génération de la réponse.';
-                chatList.appendChild(responseElement);
-
-                chatInput.value = '';
-                fileInput.value = '';
-            };
-            reader.readAsDataURL(file);
-        } else {
-            const response = fetch('{% url "chatbot" %}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': '{{ csrf_token }}'
-                },
-                body: JSON.stringify({
-                    message: message
-                })
-            });
-
-            const data = response.json();
-            const responseElement = document.createElement('li');
-            responseElement.textContent = data.response || 'Erreur lors de la génération de la réponse.';
-            chatList.appendChild(responseElement);
-
-            chatInput.value = '';
+            formData.append('file', file);
         }
+        
+        const response = await fetch('{% url "chatbot" %}', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}' // Assurez-vous que ce token est valide
+            },
+            body: formData
+        });
+        
+
+        const data = await response.json();
+        const responseElement = document.createElement('li');
+        responseElement.textContent = data.response || 'Erreur lors de la génération de la réponse.';
+        chatList.appendChild(responseElement);
+
+        chatInput.value = '';
+        fileInput.value = '';
     });
 </script>
 {% endblock %}
