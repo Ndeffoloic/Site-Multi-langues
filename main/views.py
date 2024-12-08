@@ -80,29 +80,31 @@ def filter_repetitions(response_text):
 @csrf_exempt
 def chatbot(request):
     if request.method == 'POST':
-        body_unicode = request.body.decode('utf-8')
-        body = json.loads(body_unicode)
-        message = body.get('message')
+        # Récupération du message de l'utilisateur
+        message = request.POST.get('message', '').strip()
 
-        if 'file' in request.FILES:
-            pdf_file = request.FILES['file']
-            chemin_pdf = os.path.join(settings.MEDIA_ROOT, 'manuscrit-SALHI.pdf')
-            os.makedirs(os.path.dirname(chemin_pdf), exist_ok=True)
-            with open(chemin_pdf, 'wb') as destination:
-                for chunk in pdf_file.chunks():
-                    destination.write(chunk)
+        if not message:
+            return JsonResponse({'error': 'Le message est vide.'}, status=400)
 
-            texte_brut = lire_pdf(chemin_pdf)
-            textes = decouper_texte(texte_brut)
-            docsearch = initialiser_faiss(textes)
-            chain = charger_chaine_qa()
+        # Chargement du fichier PDF existant
+        chemin_pdf = os.path.join(settings.MEDIA_ROOT, 'manuscrit-SALHI.pdf')
+        if not os.path.exists(chemin_pdf):
+            return JsonResponse({'error': 'Le fichier de référence est introuvable.'}, status=500)
 
-            documents_similaires = docsearch.similarity_search(message)
-            response_text = chain.run(input_documents=documents_similaires, question=message)
-            response_text = filter_repetitions(response_text)
+        # Lecture et traitement du fichier PDF (cette partie peut être optimisée si déjà prétraitée)
+        texte_brut = lire_pdf(chemin_pdf)
+        textes = decouper_texte(texte_brut)
+        docsearch = initialiser_faiss(textes)
+        chain = charger_chaine_qa()
 
-            return JsonResponse({'response': response_text})
+        # Recherche et génération de réponse
+        documents_similaires = docsearch.similarity_search(message)
+        response_text = chain.run(input_documents=documents_similaires, question=message)
+        response_text = filter_repetitions(response_text)
 
+        return JsonResponse({'response': response_text})
+
+    # Pour les autres méthodes (GET, etc.)
     return render(request, 'chatbot.html')
 
 def login(request):
