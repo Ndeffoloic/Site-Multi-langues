@@ -50,6 +50,7 @@ def lire_pdf(chemin_pdf):
         text = page.extract_text()
         if text:
             texte_brut += text
+    print(texte_brut)
     return texte_brut
 
 def decouper_texte(texte_brut):
