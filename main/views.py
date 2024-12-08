@@ -10,6 +10,15 @@ from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from dotenv import load_dotenv
 from huggingface_hub import InferenceClient
+from langchain.chains.question_answering import load_qa_chain
+from langchain.embeddings.openai import OpenAIEmbeddings
+from langchain.llms import OpenAI
+from langchain.text_splitter import CharacterTextSplitter
+from langchain.vectorstores import FAISS
+from langchain_community.llms import OpenAI
+from langchain_community.vectorstores import FAISS
+from langchain_openai import OpenAIEmbeddings
+from PyPDF2 import PdfReader
 
 from .models import BlogPost, Chat
 
@@ -64,53 +73,41 @@ def createBlogPost(request):
         return redirect('blog_list')  # Redirection vers la liste des blogs après la création
     return render(request, 'blog/createBlogPost.html')
 
+# Charger les variables d'environnement
+os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY")
 
-# Charger la clé API de Hugging Face et l'endpoint personnalisé depuis les variables d'environnement
-HF_TOKEN = os.getenv('HF_TOKEN')
-HUGGING_FACE_ENDPOINT = os.getenv('HUGGING_FACE_ENDPOINT')
+# Lire et extraire le texte d'un fichier PDF
+def lire_pdf(chemin_pdf):
+    lecteur = PdfReader(chemin_pdf)
+    texte_brut = ''
+    for page in lecteur.pages:
+        text = page.extract_text()
+        if text:
+            texte_brut += text
+    return texte_brut
 
-def call_llm(prompt: str):
-    """
-    Appelle l'API Hugging Face pour générer du texte à partir du prompt.
+# Découper le texte en morceaux
+def decouper_texte(texte_brut):
+    separateur = "\n"
+    decoupeur_texte = CharacterTextSplitter(
+        separator=separateur,
+        chunk_size=1000,
+        chunk_overlap=200,
+        length_function=len
+    )
+    return decoupeur_texte.split_text(texte_brut)
 
-    Args:
-        prompt (str): Le texte d'entrée pour la génération.
+# Initialiser FAISS
+def initialiser_faiss(textes):
+    modeles_embedding = OpenAIEmbeddings()
+    return FAISS.from_texts(textes, modeles_embedding)
 
-    Returns:
-        str: Le texte généré par le modèle.
-    """
-    headers = {
-        "Authorization": f"Bearer {HF_TOKEN}",
-        "Content-Type": "application/json"
-    }
-    payload = {
-        "inputs": prompt,
-        "parameters": {
-            "max_new_tokens": 200,
-            "temperature": 0.7,
-            "top_p": 0.9,
-            "top_k": 50,
-            "repetition_penalty": 1.5  # Ajuster la pénalité de répétition pour réduire les répétitions
-        }
-    }
-    try:
-        response = requests.post(HUGGING_FACE_ENDPOINT, headers=headers, json=payload)
-        response.raise_for_status()
-        generated_text = response.json()[0]["generated_text"]
-        return generated_text
-    except requests.exceptions.RequestException as e:
-        return f"Request failed: {e}"
+# Charger la chaîne QA
+def charger_chaine_qa():
+    return load_qa_chain(OpenAI(), chain_type="stuff")
 
+# Filtrer les répétitions dans une réponse
 def filter_repetitions(response_text):
-    """
-    Filtre les répétitions dans le texte généré.
-
-    Args:
-        response_text (str): Le texte généré par le modèle.
-
-    Returns:
-        str: Le texte filtré sans répétitions.
-    """
     sentences = response_text.split('. ')
     unique_sentences = []
     for sentence in sentences:
@@ -118,20 +115,34 @@ def filter_repetitions(response_text):
             unique_sentences.append(sentence)
     return '. '.join(unique_sentences)
 
+# Vue chatbot
 @csrf_exempt
 def chatbot(request):
-    if request.method == 'POST':
+    if request.method == 'POST' and 'file' in request.FILES:
+        # Télécharger le fichier
+        pdf_file = request.FILES['file']
+        chemin_pdf = f"/tmp/{pdf_file.name}"  # Chemin temporaire pour le stockage
+        with open(chemin_pdf, 'wb') as destination:
+            for chunk in pdf_file.chunks():
+                destination.write(chunk)
+        
+        # Lire et traiter le fichier PDF
+        texte_brut = lire_pdf(chemin_pdf)
+        textes = decouper_texte(texte_brut)
+        docsearch = initialiser_faiss(textes)
+        chain = charger_chaine_qa()
+
+        # Traiter la question de l'utilisateur
         body_unicode = request.body.decode('utf-8')
         body = json.loads(body_unicode)
         message = body.get('message')
-        
-        response_text = call_llm(message)
+        documents_similaires = docsearch.similarity_search(message)
+        response_text = chain.run(input_documents=documents_similaires, question=message)
         response_text = filter_repetitions(response_text)
-        
-        return JsonResponse({'message': message, 'response': response_text})
-    
-    return render(request, 'chatbot.html')
 
+        return JsonResponse({'response': response_text})
+
+    return render(request, 'chatbot.html')
 
 def login(request):
     """
