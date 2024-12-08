@@ -43,11 +43,6 @@
             body: JSON.stringify({ message: message })
         });
 
-        const data = await response.json();
-        const responseElement = document.createElement('li');
-        responseElement.textContent = data.response || 'Erreur lors de la génération de la réponse.';
-        chatList.appendChild(responseElement);
-
         chatInput.value = '';
     });
 </script>
