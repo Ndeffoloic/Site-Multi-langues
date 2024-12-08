@@ -43,16 +43,6 @@ def createBlogPost(request):
 
 os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY")
 
-def lire_pdf(chemin_pdf):
-    lecteur = PdfReader(chemin_pdf)
-    texte_brut = ''
-    for page in lecteur.pages:
-        text = page.extract_text()
-        if text:
-            texte_brut += text
-    print(texte_brut)
-    return texte_brut
-
 def decouper_texte(texte_brut):
     separateur = "\n"
     decoupeur_texte = CharacterTextSplitter(
@@ -82,21 +72,38 @@ def filter_repetitions(response_text):
 def chatbot(request):
     if request.method == 'POST':
         try:
+            print("a0")
+            print(request.body)
             # Récupération du message de l'utilisateur
             body_unicode = request.body.decode('utf-8')
+            
             body = json.loads(body_unicode)
             message = body.get('message', '').strip()
-
+            print("a1")
             if not message:
                 return JsonResponse({'error': 'Le message est vide.'}, status=400)
+            print("a2")
 
-            # Chargement du fichier PDF existant
-            chemin_pdf = os.path.join(settings.MEDIA_ROOT, 'manuscrit-SALHI.pdf')
-            if not os.path.exists(chemin_pdf):
-                return JsonResponse({'error': 'Le fichier de référence est introuvable.'}, status=500)
+            # Vérification et traitement du fichier téléversé
+            if 'file' not in request.FILES:
+                return JsonResponse({'error': 'Aucun fichier téléversé.'}, status=400)
+            print("a3")
 
-            # Lecture et traitement du fichier PDF (cette partie peut être optimisée si déjà prétraitée)
-            texte_brut = lire_pdf(chemin_pdf)
+            fichier_pdf = request.FILES['file']
+            chemin_pdf = os.path.join(settings.MEDIA_ROOT, fichier_pdf.name)
+
+            with open(chemin_pdf, 'wb+') as destination:
+                for chunk in fichier_pdf.chunks():
+                    destination.write(chunk)
+
+            print("a4")
+            # Lecture et traitement du fichier PDF
+            with open(chemin_pdf, 'rb') as f:
+                reader = PdfReader(f)
+                texte_brut = ""
+                for page in reader.pages:
+                    texte_brut += page.extract_text()
+            print(texte_brut)
             textes = decouper_texte(texte_brut)
             docsearch = initialiser_faiss(textes)
             chain = charger_chaine_qa()
