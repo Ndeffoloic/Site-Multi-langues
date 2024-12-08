@@ -1,4 +1,3 @@
-
 from pathlib import Path
 
 import dj_database_url
@@ -140,8 +139,10 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'  # Ce dossier est pour collecter les fich
 MEDIA_URL = '/media/'
 MEDIA_ROOT = '/var/main_media'
 
+# Limite de taille des fichiers téléchargés (en octets)
+DATA_UPLOAD_MAX_MEMORY_SIZE = 5485760  # 10 Mo
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
