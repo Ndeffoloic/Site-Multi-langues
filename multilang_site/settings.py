@@ -44,7 +44,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+#STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 ROOT_URLCONF = 'multilang_site.urls'
 
@@ -64,7 +64,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'multilang_site.wsgi.application'
+#WSGI_APPLICATION = 'multilang_site.wsgi.application'
 
 
 # Database
@@ -79,8 +79,9 @@ WSGI_APPLICATION = 'multilang_site.wsgi.application'
 # }gunicorn multilang_site.wsgi:application
 
 DATABASES = {
-    'default' : dj_database_url.parse(config('DATABASE_URL'))
+    'default': dj_database_url.parse(config('DATABASE_URL'), conn_max_age=6000, ssl_require=True)
 }
+
 
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
