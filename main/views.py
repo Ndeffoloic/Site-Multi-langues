@@ -19,6 +19,7 @@ from langchain_community.embeddings import OpenAIEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain_openai import OpenAI
 from PyPDF2 import PdfReader
+import logging
 
 from .models import BlogPost, Chat
 
@@ -114,7 +115,8 @@ def chatbot(request):
         except UnicodeDecodeError:
             return JsonResponse({'error': 'Erreur lors du décodage de la requête.'}, status=400)
         except Exception as e:
-            return JsonResponse({'error': f'Erreur lors de la génération de la réponse: {str(e)}'}, status=500)
+            logging.error("Erreur lors de la génération de la réponse", exc_info=True)
+            return JsonResponse({'error': 'Une erreur interne est survenue.'}, status=500)
 
     # Pour les autres méthodes (GET, etc.)
     return render(request, 'chatbot.html')
