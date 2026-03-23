@@ -1,6 +1,8 @@
 
 #30 juin 2024 05:45 UTC+2 | Création du multilang_site
+
 #Candidat: Loïc NEMBOT, étudiant en 4A IA2R à Polytech Nancy
+
 #Ce fichier README contient les instructions pour lancer le projet après avoir cloné le dépôt.
 
 
