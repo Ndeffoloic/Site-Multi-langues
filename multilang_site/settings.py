@@ -1,7 +1,8 @@
 from pathlib import Path
 
+import os
 import dj_database_url
-from decouple import config
+from decouple import config, Csv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -77,10 +78,18 @@ TEMPLATES = [
 #wsgi : webserver gateway interface 
 # }gunicorn multilang_site.wsgi:application
 
-DATABASES = {
-    'default': dj_database_url.parse(config('DATABASE_URL'), conn_max_age=6000, ssl_require=True)
-}
+# DATABASES = {
+#     'default': dj_database_url.parse(config('DATABASE_URL'), conn_max_age=6000, ssl_require=True)
+# }
 
+DATABASES = {
+    'default': db_url(
+        config(
+            'DATABASE_URL',
+            default='sqlite:///db.sqlite3'  # Utilise SQLite si pas de DATABASE_URL
+        )
+    )
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
