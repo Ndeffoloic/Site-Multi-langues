@@ -100,7 +100,7 @@ pydantic-settings==2.6.1
 pydantic_core==2.27.1
 Pygments==2.18.0
 pypdf==6.9.1
-PyPDF2==3.0.1
+PyPDF2>=3.0.1
 python-dateutil==2.9.0.post0
 python-decouple==3.8
 python-dotenv==1.0.1
