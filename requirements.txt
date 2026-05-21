@@ -70,7 +70,7 @@ langsmith
 MarkupSafe==3.0.2
 marshmallow==3.26.2
 matplotlib-inline==0.1.7
-mistune==3.0.2
+mistune>=3.2.1
 multidict==6.1.0
 mypy-extensions==1.0.0
 nbclient==0.10.1
